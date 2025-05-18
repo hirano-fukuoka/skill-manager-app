@@ -10,23 +10,20 @@ df = pd.read_csv("data/certs.csv")
 df["有効期限"] = pd.to_datetime(df["有効期限"], format="%Y-%m-%d")
 today = pd.Timestamp.today()
 
+# --- 表示用の日付（年月日のみ）を作成 ---
+df_display = df.copy()
+df_display["有効期限"] = df_display["有効期限"].dt.strftime('%Y-%m-%d')
+
 # --- 期限切れ一覧 ---
-df_expired = df[df["有効期限"] < today]
-
 st.subheader("⏰ 有効期限切れ資格一覧")
-if df_expired.empty:
-    st.success("期限切れの資格はありません。")
-else:
-    st.dataframe(df_expired)
+expired = df[df["有効期限"] < today]
+st.dataframe(df_display[df["有効期限"] < today]) if not expired.empty else st.success("期限切れの資格はありません。")
 
-# --- 有効期限が近い（30日以内） ---
+# --- 期限30日以内 ---
 st.subheader("⚠️ 有効期限が30日以内の資格")
-df_warning = df[(df["有効期限"] >= today) & (df["有効期限"] <= today + pd.Timedelta(days=30))]
-if df_warning.empty:
-    st.info("期限が近い資格はありません。")
-else:
-    st.dataframe(df_warning)
+warning = df[(df["有効期限"] >= today) & (df["有効期限"] <= today + pd.Timedelta(days=30))]
+st.dataframe(df_display[warning.index]) if not warning.empty else st.info("期限が近い資格はありません。")
 
-# --- 全体一覧 ---
+# --- 全体表示 ---
 st.subheader("📋 全資格一覧")
-st.dataframe(df.sort_values("有効期限"))
+st.dataframe(df_display.sort_values("有効期限"))
